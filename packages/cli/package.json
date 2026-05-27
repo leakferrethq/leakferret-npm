@@ -1,0 +1,37 @@
+{
+  "name": "@leakferret/cli",
+  "version": "0.1.0",
+  "description": "Context-aware secret detection with provider verification — npm wrapper around the native leakferret binary.",
+  "license": "MIT",
+  "author": {
+    "name": "Maria Khan",
+    "email": "missusk@protonmail.com"
+  },
+  "homepage": "https://github.com/leakferrethq/leakferret",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/leakferrethq/leakferret-npm",
+    "directory": "packages/cli"
+  },
+  "bugs": "https://github.com/leakferrethq/leakferret/issues",
+  "keywords": ["security", "secrets", "scanner", "trufflehog", "gitleaks", "mcp"],
+  "type": "commonjs",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "bin": {
+    "leakferret": "bin/leakferret.js"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "scripts/postinstall.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "postinstall": "node scripts/postinstall.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
