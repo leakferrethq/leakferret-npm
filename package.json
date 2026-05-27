@@ -1,0 +1,22 @@
+{
+  "name": "leakferret-monorepo",
+  "private": true,
+  "version": "0.0.0",
+  "description": "npm distribution of leakferret: @leakferret/cli + @leakferret/mcp.",
+  "license": "MIT",
+  "author": {
+    "name": "Maria Khan",
+    "email": "missusk@protonmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/leakferrethq/leakferret-npm"
+  },
+  "workspaces": [
+    "packages/cli",
+    "packages/mcp"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}
