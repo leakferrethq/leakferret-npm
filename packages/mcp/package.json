@@ -1,0 +1,35 @@
+{
+  "name": "@leakferret/mcp",
+  "version": "0.1.0",
+  "description": "MCP (Model Context Protocol) server for leakferret. Stops AI agents from committing live secrets.",
+  "license": "MIT",
+  "author": {
+    "name": "Maria Khan",
+    "email": "missusk@protonmail.com"
+  },
+  "homepage": "https://github.com/leakferrethq/leakferret",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/leakferrethq/leakferret-npm",
+    "directory": "packages/mcp"
+  },
+  "bugs": "https://github.com/leakferrethq/leakferret/issues",
+  "keywords": ["mcp", "model-context-protocol", "secrets", "claude", "cursor", "agent"],
+  "type": "commonjs",
+  "main": "lib/index.js",
+  "bin": {
+    "leakferret-mcp": "bin/leakferret-mcp.js"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "README.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "@leakferret/cli": "0.1.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
