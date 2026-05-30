@@ -8,9 +8,12 @@ function detectPlatform() {
   else if (arch === 'arm64') cpu = 'aarch64';
   else throw new Error(`unsupported CPU arch: ${arch}`);
 
-  if (platform === 'linux')  return `${cpu}-unknown-linux-gnu`;
+  if (platform === 'linux') {
+    if (cpu === 'aarch64') throw new Error('aarch64-linux has no prebuilt binary yet; build from source');
+    return `${cpu}-unknown-linux-gnu`;
+  }
   if (platform === 'darwin') return `${cpu}-apple-darwin`;
-  if (platform === 'win32')  return `${cpu}-pc-windows-gnu`;
+  if (platform === 'win32')  return `${cpu}-pc-windows-msvc`;
   throw new Error(`unsupported platform: ${platform}`);
 }
 

@@ -67,7 +67,9 @@ function download(url, dest, redirects = 0) {
     // Cross-platform extraction: prefer the system `tar`; fall back
     // would be to use a JS gunzip lib, but we want to keep zero
     // runtime deps.
-    execFileSync('tar', ['-xzf', tmp, '-C', vendorDir], { stdio: 'inherit' });
+    // The archive nests everything under leakferret-<version>-<triple>/;
+    // strip it so the binary lands directly in vendor/.
+    execFileSync('tar', ['-xzf', tmp, '--strip-components=1', '-C', vendorDir], { stdio: 'inherit' });
     fs.unlinkSync(tmp);
     if (process.platform !== 'win32') {
       fs.chmodSync(dest, 0o755);
