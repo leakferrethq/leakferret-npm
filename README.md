@@ -143,6 +143,25 @@ Settings → MCP Servers → add command `npx @leakferret/mcp`.
 Plus a `classify` prompt — the system prompt the host model uses to classify
 candidates inline.
 
+## Use it in CI
+
+`@leakferret/cli` is one binary with clear exit codes (`0` = clean, `1` =
+findings), so it drops into any CI. Baseline once so you only fail on *new*
+secrets, then `verify` on every build:
+
+```bash
+npm i -g @leakferret/cli
+leakferret baseline init      # commit .leakferret-baseline.json (the salt is gitignored)
+leakferret verify .           # exits 1 on any REAL finding
+```
+
+- **GitHub Actions:** use the
+  [action](https://github.com/leakferrethq/leakferret-action) (uploads SARIF to
+  Code Scanning), or run the CLI directly.
+- **CircleCI / GitLab CI / Argo Workflows / Jenkins:** identical recipe —
+  `npm i -g @leakferret/cli && leakferret verify .`. Add `--format sarif` for a
+  report, or `--only-verified` to fail only on provider-confirmed live keys.
+
 ## Using a local binary
 
 Every leakferret wrapper honors the `LEAKFERRET_BIN` environment variable. Point
