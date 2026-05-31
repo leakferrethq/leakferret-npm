@@ -1,6 +1,6 @@
 {
   "name": "@leakferret/cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Context-aware secret detection with provider verification — npm wrapper around the native leakferret binary.",
   "license": "MIT",
   "author": {
