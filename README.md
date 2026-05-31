@@ -6,6 +6,10 @@
 
 > MCP-native secret scanner — verified findings, agent-applied rewrites.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/leakferrethq/leakferret/master/brand/demo.gif" alt="leakferret finds, verifies, and rewrites a leaked secret" width="760">
+</p>
+
 npm monorepo for the JavaScript distribution of
 [`leakferret`](https://github.com/leakferrethq/leakferret). Neither package
 contains scanning logic: each ships a small JS shim plus a `postinstall.js` that
