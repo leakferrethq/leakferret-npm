@@ -1,0 +1,20 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.leakferrethq/leakferret",
+  "description": "Context-aware secret scanner. Lets an AI coding agent scan, classify, verify, and rewrite hardcoded secrets before it commits.",
+  "version": "0.1.9",
+  "repository": {
+    "url": "https://github.com/leakferrethq/leakferret",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@leakferret/mcp",
+      "version": "0.1.9",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}
