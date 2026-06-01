@@ -1,0 +1,33 @@
+name: publish-mcp-registry
+
+# Publishes server.json to the MCP Registry (registry.modelcontextprotocol.io).
+# Auth is GitHub OIDC: this repo lives under the leakferrethq org, and that
+# org ownership is what the registry checks to authorize the
+# io.github.leakferrethq/* namespace. No token secret required.
+#
+# The npm package @leakferret/mcp is published separately; bump its version and
+# server.json, publish to npm, then run this (push a registry-v* tag or
+# dispatch it manually).
+on:
+  workflow_dispatch:
+  push:
+    tags: ['registry-v*']
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # OIDC token for registry auth
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install mcp-publisher
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+
+      - name: Authenticate via GitHub OIDC
+        run: ./mcp-publisher login github-oidc
+
+      - name: Publish to MCP Registry
+        run: ./mcp-publisher publish
