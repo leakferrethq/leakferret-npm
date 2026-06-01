@@ -11,11 +11,28 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const https = require('node:https');
+const crypto = require('node:crypto');
 const { execFileSync } = require('node:child_process');
 const { detectPlatform, binaryName } = require('../lib/platform');
 
-const pkg = require('../package.json');
-const VERSION = pkg.version;
+// The native binary release this package downloads. Decoupled from the npm
+// package version (like the Ruby gem's BINARY_VERSION) so a wrapper-only change
+// can ship without a matching binary release. Bump together with CHECKSUMS on
+// every binary release.
+const BINARY_VERSION = '0.1.3';
+
+// SHA256 of each release tarball, pinned to BINARY_VERSION. The download is
+// verified against these before extraction, so a tampered or corrupted release
+// asset is rejected rather than executed. Because the digests live in the
+// published package, auditing the package tells you exactly which binary bytes
+// it will run. Regenerate on every binary bump from the `*.tar.gz.sha256` files.
+const CHECKSUMS = {
+  'aarch64-apple-darwin': '62d7152954e3e2e50d8423c8a1e792ba1783123b8a9d8c5fbc2a71013e890992',
+  'aarch64-pc-windows-msvc': '6ad3eb20a661579c11857259159f8fb55b26f72608c75ecc206fff5f9da9c800',
+  'x86_64-apple-darwin': 'd8b28edf427b975412458007069a848e16cea45825e43dff3652bdcd3fd3f1d3',
+  'x86_64-pc-windows-msvc': 'f447424f148a6874dc2ead208eb460a9f6b20d6ddbce6f74ca9b2d47655e1b2b',
+  'x86_64-unknown-linux-gnu': 'bf24746f1188d14b2b420e760ebd374a4f88a68ea1b718e7977d8c7309a9f1da',
+};
 
 function log(msg) {
   process.stderr.write(`[@leakferret/cli/postinstall] ${msg}\n`);
@@ -37,10 +54,10 @@ if (fs.existsSync(dest)) {
 
 fs.mkdirSync(vendorDir, { recursive: true });
 
-const url = `https://github.com/leakferrethq/leakferret/releases/download/v${VERSION}/leakferret-${VERSION}-${triple}.tar.gz`;
+const url = `https://github.com/leakferrethq/leakferret/releases/download/v${BINARY_VERSION}/leakferret-${BINARY_VERSION}-${triple}.tar.gz`;
 log(`downloading ${url}`);
 
-const tmp = path.join(vendorDir, `leakferret-${VERSION}-${triple}.tar.gz`);
+const tmp = path.join(vendorDir, `leakferret-${BINARY_VERSION}-${triple}.tar.gz`);
 
 function download(url, dest, redirects = 0) {
   return new Promise((resolve, reject) => {
@@ -64,6 +81,26 @@ function download(url, dest, redirects = 0) {
 (async () => {
   try {
     await download(url, tmp);
+
+    // Verify the tarball against the pinned hash BEFORE extracting or running
+    // anything. A mismatch means the bytes are not what this package was
+    // published against, so fail hard rather than execute them.
+    const expected = CHECKSUMS[triple];
+    if (!expected) {
+      fs.unlinkSync(tmp);
+      log(`no pinned checksum for ${triple}; refusing to install an unverified binary.`);
+      process.exit(1);
+    }
+    const actual = crypto.createHash('sha256').update(fs.readFileSync(tmp)).digest('hex');
+    if (actual.toLowerCase() !== expected.toLowerCase()) {
+      fs.unlinkSync(tmp);
+      log(`checksum mismatch for ${url}`);
+      log(`  expected ${expected}`);
+      log(`  got      ${actual}`);
+      log('refusing to install a binary that does not match the pinned hash.');
+      process.exit(1);
+    }
+
     // Cross-platform extraction: prefer the system `tar`; fall back
     // would be to use a JS gunzip lib, but we want to keep zero
     // runtime deps.
