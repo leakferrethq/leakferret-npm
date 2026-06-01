@@ -12,7 +12,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const https = require('node:https');
 const crypto = require('node:crypto');
-const { execFileSync } = require('node:child_process');
+const zlib = require('node:zlib');
 const { detectPlatform, binaryName } = require('../lib/platform');
 
 // The native binary release this package downloads. Decoupled from the npm
@@ -36,6 +36,28 @@ const CHECKSUMS = {
 
 function log(msg) {
   process.stderr.write(`[@leakferret/cli/postinstall] ${msg}\n`);
+}
+
+// Extract in pure JS (gunzip + a minimal tar reader) rather than shelling out
+// to `tar`, which on Windows mis-reads `C:\...` as a remote host and fails.
+// Returns the bytes of the first entry whose basename matches `want`; the
+// archive nests everything under leakferret-<version>-<triple>/.
+function extractFromTarGz(gzBuf, want) {
+  const buf = zlib.gunzipSync(gzBuf);
+  let offset = 0;
+  while (offset + 512 <= buf.length) {
+    const header = buf.subarray(offset, offset + 512);
+    const name = header.subarray(0, 100).toString('utf8').replace(/\0.*$/, '');
+    if (name === '') break; // end-of-archive padding
+    const sizeOctal = header.subarray(124, 136).toString('utf8').replace(/\0.*$/, '').trim();
+    const size = parseInt(sizeOctal, 8) || 0;
+    const dataStart = offset + 512;
+    if (name.split('/').pop() === want && size > 0) {
+      return buf.subarray(dataStart, dataStart + size);
+    }
+    offset = dataStart + Math.ceil(size / 512) * 512;
+  }
+  return null;
 }
 
 if (process.env.LEAKFERRET_SKIP_DOWNLOAD) {
@@ -101,12 +123,13 @@ function download(url, dest, redirects = 0) {
       process.exit(1);
     }
 
-    // Cross-platform extraction: prefer the system `tar`; fall back
-    // would be to use a JS gunzip lib, but we want to keep zero
-    // runtime deps.
-    // The archive nests everything under leakferret-<version>-<triple>/;
-    // strip it so the binary lands directly in vendor/.
-    execFileSync('tar', ['-xzf', tmp, '--strip-components=1', '-C', vendorDir], { stdio: 'inherit' });
+    // Unpack the verified tarball in pure JS so this works identically on
+    // Windows (no external `tar`). The binary lands directly in vendor/.
+    const bin = extractFromTarGz(fs.readFileSync(tmp), binaryName());
+    if (!bin) {
+      throw new Error(`binary ${binaryName()} not found inside ${tmp}`);
+    }
+    fs.writeFileSync(dest, bin);
     fs.unlinkSync(tmp);
     if (process.platform !== 'win32') {
       fs.chmodSync(dest, 0o755);
