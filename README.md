@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.png" alt="leakferret" width="380">
+  <img src="https://raw.githubusercontent.com/leakferrethq/leakferret/master/brand/logo.png" alt="leakferret" width="380">
 </p>
 
 # leakferret (npm)
@@ -109,7 +109,9 @@ An [MCP](https://modelcontextprotocol.io) (Model Context Protocol) server that
 gives AI coding agents tools to scan, classify, verify, and rewrite findings
 before producing edits. The pitch: agents hardcode secrets too, and nobody
 reviews their output line by line — this lets the agent self-check before it
-commits. Works with Claude Code, Cursor, Continue, and Claude Desktop.
+commits. Works with Claude Code, Cursor, Continue, and Claude Desktop. Listed in
+the [MCP Registry](https://registry.modelcontextprotocol.io) as
+`io.github.leakferrethq/leakferret`, so registry-aware clients can discover it.
 
 ### Install and run
 
@@ -120,7 +122,13 @@ npx @leakferret/mcp             # JSON-RPC 2.0 over stdio
 
 ### Hook into Claude Code
 
-Add to your `.mcp.json`:
+One line:
+
+```bash
+claude mcp add leakferret -- npx -y @leakferret/mcp
+```
+
+Or add to your `.mcp.json`:
 
 ```json
 {
