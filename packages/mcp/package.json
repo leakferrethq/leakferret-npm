@@ -1,6 +1,6 @@
 {
   "name": "@leakferret/mcp",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "mcpName": "io.github.leakferrethq/leakferret",
   "description": "MCP (Model Context Protocol) server for leakferret. Stops AI agents from committing live secrets.",
   "license": "MIT",
@@ -28,7 +28,7 @@
     "LICENSE"
   ],
   "dependencies": {
-    "@leakferret/cli": "0.1.11"
+    "@leakferret/cli": "0.1.12"
   },
   "engines": {
     "node": ">=18"
