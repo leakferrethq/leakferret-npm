@@ -1,6 +1,6 @@
 {
   "name": "@leakferret/cli",
-  "version": "0.1.12",
+  "version": "0.2.0",
   "description": "Context-aware secret detection with provider verification — npm wrapper around the native leakferret binary.",
   "license": "MIT",
   "author": {
@@ -24,12 +24,15 @@
   "files": [
     "bin/",
     "lib/",
-    "scripts/postinstall.js",
     "README.md",
     "LICENSE"
   ],
-  "scripts": {
-    "postinstall": "node scripts/postinstall.js"
+  "optionalDependencies": {
+    "@leakferret/cli-linux-x64": "0.2.0",
+    "@leakferret/cli-darwin-x64": "0.2.0",
+    "@leakferret/cli-darwin-arm64": "0.2.0",
+    "@leakferret/cli-win32-x64": "0.2.0",
+    "@leakferret/cli-win32-arm64": "0.2.0"
   },
   "engines": {
     "node": ">=18"

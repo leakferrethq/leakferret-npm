@@ -21,4 +21,20 @@ function binaryName() {
   return process.platform === 'win32' ? 'leakferret.exe' : 'leakferret';
 }
 
-module.exports = { detectPlatform, binaryName };
+// The per-platform package that carries the native binary for this host, listed
+// as an optionalDependency of @leakferret/cli. npm installs only the one whose
+// os/cpu match, the way esbuild and @swc/core ship. Returns undefined on a
+// platform we do not publish a binary for.
+const PLATFORM_PACKAGES = {
+  'linux-x64':    '@leakferret/cli-linux-x64',
+  'darwin-x64':   '@leakferret/cli-darwin-x64',
+  'darwin-arm64': '@leakferret/cli-darwin-arm64',
+  'win32-x64':    '@leakferret/cli-win32-x64',
+  'win32-arm64':  '@leakferret/cli-win32-arm64',
+};
+
+function platformPackage() {
+  return PLATFORM_PACKAGES[`${process.platform}-${process.arch}`];
+}
+
+module.exports = { detectPlatform, binaryName, platformPackage, PLATFORM_PACKAGES };
