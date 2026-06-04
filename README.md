@@ -16,17 +16,20 @@
 
 npm monorepo for the JavaScript distribution of
 [`leakferret`](https://github.com/leakferrethq/leakferret). Neither package
-contains scanning logic: each ships a small JS shim plus a `postinstall.js` that
-downloads the prebuilt, statically-linked binary (written in Rust) from GitHub
-Releases into `vendor/`, and shells out to it. Same pattern as `esbuild`,
-`biome`, and `@swc/core`.
+contains scanning logic: each ships a small JS shim and shells out to the
+prebuilt, statically-linked binary (written in Rust). The binary is **bundled
+inside per-platform packages** (`@leakferret/cli-linux-x64`, `-darwin-arm64`,
+…), listed as `optionalDependencies`, so npm installs only the one matching your
+host. There is **no `postinstall`, no download, no network** — the exact same
+pattern `esbuild` and `@swc/core` use. Audit it with `npm pack`.
 
 ## Packages
 
 | Package | Purpose |
 |---|---|
-| [`@leakferret/cli`](./packages/cli) | CLI and programmatic API. Downloads and bundles the native binary. |
+| [`@leakferret/cli`](./packages/cli) | CLI and programmatic API. Resolves the native binary from a per-platform package. |
 | [`@leakferret/mcp`](./packages/mcp) | MCP server for AI coding agents. Depends on `@leakferret/cli`. |
+| `@leakferret/cli-<platform>` | Binary-carrying packages (linux-x64, darwin-x64, darwin-arm64, win32-x64, win32-arm64). Installed automatically. |
 
 Both target Node >= 18 on Linux, macOS, and Windows.
 
@@ -70,8 +73,9 @@ pnpm add -D @leakferret/cli
 npx @leakferret/cli scan .
 ```
 
-Postinstall downloads `leakferret-{version}-{triple}.tar.gz` from GitHub
-Releases into `node_modules/@leakferret/cli/vendor/`.
+npm installs the matching `@leakferret/cli-<platform>` package (an
+`optionalDependency`) which carries the native binary; `@leakferret/cli`
+resolves it from there. No download.
 
 ### CLI
 
@@ -181,15 +185,16 @@ leakferret verify .           # exits 1 on any REAL finding
 ## Using a local binary
 
 Every leakferret wrapper honors the `LEAKFERRET_BIN` environment variable. Point
-it at a binary on disk and the wrapper runs that instead of the downloaded copy:
+it at a binary on disk and the wrapper runs that instead of the bundled one:
 
 ```bash
 export LEAKFERRET_BIN=/opt/leakferret/leakferret
 npx leakferret scan .
 ```
 
-For air-gapped or offline installs, set `LEAKFERRET_SKIP_DOWNLOAD=1` to skip the
-postinstall download and provide the binary yourself.
+On a platform without a prebuilt package (or if the optional dependency was
+skipped), the CLI errors with build-from-source instructions
+(`cargo install leakferret-cli`) — it never downloads a binary.
 
 ## Block commits locally (pre-commit hook)
 

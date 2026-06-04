@@ -3,10 +3,8 @@ package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
-# Bundled binaries downloaded by postinstall.js — never commit.
-packages/cli/vendor/
-
-# Build artefacts
+# Per-platform packages (with the native binary) are generated into dist/ by
+# scripts/build-platform-packages.js at publish time — never commit.
 dist/
 *.tgz
 

@@ -1,8 +1,10 @@
 name: smoke
 
-# Real install + scan + MCP handshake on every OS. `npm install` runs the
-# cli postinstall, which downloads the published release binary — so this
-# only passes once leakferrethq/leakferret v0.1.0 is public.
+# End-to-end check on every OS, proving the no-download path: build the
+# per-platform packages (binary bundled), pack cli + mcp + this runner's
+# platform package, install them, then scan + run the MCP handshake. The
+# install pulls no binary from the network - @leakferret/cli resolves the
+# bundled binary out of the platform package.
 on:
   workflow_dispatch:
   push:
@@ -10,7 +12,7 @@ on:
 
 jobs:
   install-and-scan:
-    name: npm install + scan + mcp (${{ matrix.os }})
+    name: platform-package install + scan + mcp (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -21,19 +23,39 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Install workspace (cli postinstall downloads the release binary)
-        run: npm install
-      - name: Scan via the CLI
+
+      - name: Build the per-platform packages (bundles the binary)
+        run: node scripts/build-platform-packages.js
+
+      - name: Pack + install (cli + mcp + this platform), scan, MCP handshake
         shell: bash
         run: |
-          mkdir -p app
-          printf "AWS_ACCESS_KEY = 'AKIAQ7W2E3R4T5Y6U7I8'\n" > app/config.rb
-          out="$(node packages/cli/bin/leakferret.js scan . || true)"
+          set -euo pipefail
+          root="$PWD"
+          case "$RUNNER_OS" in
+            Linux)   platdir=cli-linux-x64 ;;
+            macOS)   if [ "$(uname -m)" = "arm64" ]; then platdir=cli-darwin-arm64; else platdir=cli-darwin-x64; fi ;;
+            Windows) platdir=cli-win32-x64 ;;
+          esac
+
+          ( cd packages/cli  && npm pack ) >/dev/null
+          ( cd packages/mcp  && npm pack ) >/dev/null
+          ( cd "dist/$platdir" && npm pack ) >/dev/null
+          cli="$(ls -1 "$root"/packages/cli/*.tgz | head -1)"
+          mcp="$(ls -1 "$root"/packages/mcp/*.tgz | head -1)"
+          plat="$(ls -1 "$root/dist/$platdir"/*.tgz | head -1)"
+
+          mkdir -p "$root/.smoke" && cd "$root/.smoke"
+          npm init -y >/dev/null
+          npm install --no-audit --no-fund "$cli" "$mcp" "$plat"
+
+          # scan: must resolve the bundled binary (no download) and find the secret
+          printf "AWS_ACCESS_KEY = 'AKIAQ7W2E3R4T5Y6U7I8'\n" > config.rb
+          out="$(node node_modules/@leakferret/cli/bin/leakferret.js scan . || true)"
           echo "$out"
           echo "$out" | grep -q 'aws_access_key' || { echo "::error::cli did not detect the planted secret"; exit 1; }
-      - name: MCP initialize handshake
-        shell: bash
-        run: |
-          resp="$(printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' | node packages/mcp/bin/leakferret-mcp.js)"
+
+          # mcp handshake (mcp -> cli -> bundled binary)
+          resp="$(printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' | node node_modules/@leakferret/mcp/bin/leakferret-mcp.js)"
           echo "$resp"
           echo "$resp" | grep -q '"serverInfo"' || { echo "::error::mcp handshake failed"; exit 1; }

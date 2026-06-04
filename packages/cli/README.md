@@ -14,10 +14,12 @@
 </p>
 
 The npm distribution of [`leakferret`](https://github.com/leakferrethq/leakferret).
-This package contains no scanning logic of its own: it ships a small JS shim plus
-a `postinstall` that downloads the prebuilt, statically-linked binary (written in
-Rust) from GitHub Releases into `vendor/`, then shells out to it. Same pattern as
-`esbuild`, `biome`, and `@swc/core`.
+This package contains no scanning logic of its own: it ships a small JS shim and
+shells out to the prebuilt, statically-linked binary (written in Rust). The
+binary is bundled inside a per-platform package (`@leakferret/cli-<platform>`,
+listed as an `optionalDependency`); npm installs only the one matching your host
+and the shim resolves it from there. No `postinstall`, no download, no network —
+same pattern as `esbuild` and `@swc/core`. Audit it with `npm pack`.
 
 ## What it does
 
@@ -55,8 +57,9 @@ pnpm add -D @leakferret/cli
 npx @leakferret/cli scan .
 ```
 
-Postinstall downloads `leakferret-{version}-{triple}.tar.gz` from GitHub Releases
-into `node_modules/@leakferret/cli/vendor/`. Node >= 18 on Linux, macOS, Windows.
+The matching `@leakferret/cli-<platform>` package (an `optionalDependency`)
+carries the native binary; this package resolves it from `node_modules`. No
+download. Node >= 18 on Linux, macOS, Windows (x64 and arm64).
 
 ## CLI
 
@@ -134,8 +137,9 @@ scan, verify, and rewrite secrets **before it writes a commit**:
 
 ## Air-gapped / offline
 
-Set `LEAKFERRET_SKIP_DOWNLOAD=1` to skip the postinstall download and point
-`LEAKFERRET_BIN` at a pre-positioned binary:
+There is no install-time download to worry about: the binary ships inside the
+platform package. On a platform without a prebuilt package, or to use your own
+binary, point `LEAKFERRET_BIN` at it:
 
 ```bash
 export LEAKFERRET_BIN=/opt/leakferret/leakferret
