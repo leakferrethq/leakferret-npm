@@ -45,7 +45,8 @@ jobs:
           mcp="$(ls -1 "$root"/packages/mcp/*.tgz | head -1)"
           plat="$(ls -1 "$root/dist/$platdir"/*.tgz | head -1)"
 
-          mkdir -p "$root/.smoke" && cd "$root/.smoke"
+          work="${RUNNER_TEMP:-/tmp}/lf-smoke"
+          mkdir -p "$work" && cd "$work"
           npm init -y >/dev/null
           npm install --no-audit --no-fund "$cli" "$mcp" "$plat"
 
